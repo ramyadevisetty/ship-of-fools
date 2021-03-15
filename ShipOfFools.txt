@@ -1,0 +1,282 @@
+"""ShipOfFools Game"""
+import random
+
+class Die:
+    """Die class which is Responsible for handling
+    randomly generated integer values between 1 and 6."""
+
+    def __init__(self):
+        """Die class constructor """
+        self._value = 1
+        self.roll()
+
+    def get_value(self) ->int:
+        """Method to get value
+
+        Returns:
+            int: Top side value of the die
+        """
+        return self._value
+
+    def roll(self):
+        """Method for randomly generating dice value"""
+        self._value = random.randint(1,6)
+
+class DiceCup:
+    """DiceCup class which handles five objects of class Die.
+    This class has the ability to bank and release dice individually.
+    Can also roll dice that are not banked."""
+
+    def __init__(self, cupsize:int):
+        """DiceCup class constructor class"""
+        self._dice = []
+        self.new_list = []
+        self.die = Die()
+        # creating die objects
+        iterable_obj = iter(range(cupsize))
+        while True:
+            try:
+                item = next(iterable_obj)
+                self._dice.append(Die())
+            except StopIteration:
+                break
+
+        # creating bank list
+        for m in range(cupsize):
+            self.new_list.append(False)
+
+    def value(self, index:int) -> int:
+        """Method for finding the face value of particular die
+
+        Args:
+            index (int): index for refering die object
+
+        Returns:
+            int: die's top value with the index
+        """
+        return self._dice[index].get_value()
+
+    def bank(self,index:int):
+        """method for banking particular die
+
+        Args:
+            index (int): index for refering die object
+        """
+        self.new_list[index] = True
+
+    def is_banked(self,index:int) ->int:
+        """method for checking whether a particular die is banked or not
+
+        Args:
+            index (int): index for refering die object
+
+        """
+        return self.new_list[index]
+
+    def release(self,index:int):
+        """method for releasing or unbanking particular banked die
+
+        Args:
+            index (int): index for refering die object
+        """
+        if self.new_list[index] == True:
+            self.new_list[index] = False
+
+    def release_all(self):
+        """method for releasing or unbanking banked dice"""
+        for j in range(len(self._dice)):
+            self.new_list[j] = False
+
+    def roll(self):
+        """method for rolling unbanked dice"""
+        for y in range(len(self._dice)):
+            if self.new_list[y]== False:
+                self._dice[y].roll()
+                print("rolled value",self._dice[y].get_value())
+
+
+class ShipOfFoolsGame:
+    """ShipOfFoolsGame class which is responsible for the game logic.
+    This class has the ability to play a round of the game resulting in a score.
+    This class also has a property that tells what accumulated score results in a winning state,
+    for example 21."""
+
+    def __init__(self):
+        """ShipOfFoolsGame class constructor"""
+        self._cup = DiceCup(5)
+        self.winning_score = 21
+
+    def round(self) -> int:
+        """
+        Method for executing game. This contaon main logic of the game.
+
+        Returns:
+            int: player's individual score
+        """
+        has_ship = False
+        has_captain = False
+        has_crew = False
+        crew = 0
+        for i in range(3):
+            self._cup.roll()
+            # If there has not ship and value is 6 bank it
+            if not has_ship:
+                for k in range(len(self._cup._dice)):
+                    if self._cup.value(k) == 6:
+                        self._cup.bank(k)
+                        has_ship = True
+                        break
+
+            # If there has ship and has not captain and value is 5 banking it
+            if has_ship:
+                if not has_captain:
+                    for k in range(len(self._cup._dice)):
+                        if self._cup.value(k) == 5:
+                            self._cup.bank(k)
+                            has_captain = True
+                            break
+
+            # If there has captain and has not crew and value is 4 banking it
+            if has_captain:
+                if not has_crew:
+                    for k in range(len(self._cup._dice)):
+                        if self._cup.value(k) == 4:
+                            self._cup.bank(k)
+                            has_crew = True
+                            break
+
+            # if there is ship, captain, crew banking the dice for score
+            if has_ship and has_captain and has_crew:
+                for k in range(len(self._cup._dice)):
+                    if not self._cup.is_banked(k) and self._cup.value(k) > 3:
+                        self._cup.bank(k)
+
+
+            print("---------------------------round finished----------------------------" )
+        print("******************************FINSHED THREE ROUNDS****************************")
+# calculate the sum of the two remaining.
+        total_sum = 0
+        if has_ship and has_captain and has_crew:
+            for k in range(len(self._cup._dice)):
+                total_sum = total_sum + self._cup._dice[k]._value
+            crew = total_sum - 15
+        return crew
+
+
+class Player:
+    """Player class which is responsible for the score of the individual player.
+    This class has the ability, given a game logic, play a round of a game.
+    The gained score is accumulated in the attribute score."""
+
+    def __init__(self,namestring: str):
+        """Player class constructor"""
+        self._name = str()
+        self._score = int()
+        self.set_name(namestring)
+
+    def set_name(self,namestring: str):
+        """method to set name for the player.
+
+        Args:
+            namestring (str): name
+        """
+        self._name = namestring
+
+    def current_score(self):
+        """method for calculating current score."""
+        print("player: ",self._name, "current score: ",self._score)
+
+    def reset_score(self):
+        """method for resetting score"""
+        self._score = 0
+
+    def play_round(self,game:object):
+        """method to play a round of game.
+
+        Args:
+            game (object): ShipOfFoolsGame class object
+        """
+        self._score = self._score + game.round()
+        print(self._name,"current score: ", self._score)
+
+
+class PlayRoom:
+    """PlayRoom class which Responsible for handling a number of players and a game.
+    Every round the room lets each player play, and afterwards check if any player
+    have reached the winning score."""
+
+    def __init__(self):
+        """Playroom class object."""
+        self._players = []
+
+    def set_game(self,game:object):
+        """method to set game.
+
+        Args:
+            game (object): object for ShipOfFoolsGame
+        """
+        self._game = game
+
+    def add_player(self,player:object):
+        """method to add player.
+
+        Args:
+            player (object): Player class Instance
+        """
+        self._players.append(player)
+
+    def reset_score(self):
+        """method to reset score."""
+        for x in self._players:
+            x._score = 0
+
+    def play_round(self):
+        """method to play a round of game."""
+        for x in self._players:
+            x.play_round(self._game)
+            self._game._cup.release_all()
+
+    def game_finished(self) ->bool:
+        """method to check whether the game is finished or not.
+
+        Returns:
+            bool: if player_score > 21 then returns TRUE
+                  if player_score < 21 then returns FALSE
+        """
+        for x in self._players:
+            if x._score >= 21:
+                return True
+        return False
+
+    def print_scores(self):
+        """method to print scores."""
+        for x in self._players:
+            x.current_score()
+
+    def print_winner(self):
+        """method to print winner of the game."""
+        count = 0
+        winner = self._players[0]
+        for x in self._players:
+            if winner._score < x._score:
+                winner = x
+        for x in self._players:
+            if winner._score == x._score:
+                count = count + 1
+        if count > 1:
+            print("It's a Tie")
+        else:
+            print( winner._name, "is the winner of this game")
+
+print("############################ SHIP OF FOOLS #############################")
+
+if __name__ == "__main__":
+    room = PlayRoom()
+    room.set_game(ShipOfFoolsGame())
+    room.add_player(Player("ching"))
+    room.add_player(Player("chang"))
+    room.reset_score()
+    while not room.game_finished():
+        room.play_round()
+        room.print_scores()
+    room.print_winner()
